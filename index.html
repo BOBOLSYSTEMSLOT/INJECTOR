@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MESIN INJECTOR VVIP</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Courier New', monospace; }
+        body { background: #000; margin: 0; overflow: hidden; display: flex; justify-content: center; padding-top: 10px; }
+
+        /* Background Matrix */
+        #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        /* RGB Frame Neon */
+        .rgb-frame {
+            position: relative; z-index: 10; padding: 3px;
+            background: linear-gradient(90deg, #ff003c, #00f2fe, #ff003c);
+            background-size: 400%; border-radius: 15px;
+            animation: flow 3s linear infinite;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
+        }
+        @keyframes flow { 0% { background-position: 0%; } 100% { background-position: 400%; } }
+
+        .panel { width: 300px; background: rgba(10, 10, 20, 0.95); border-radius: 12px; overflow: hidden; color: #fff; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(5px); }
+        .header { background: rgba(0, 242, 254, 0.1); padding: 12px; text-align: center; font-size: 13px; font-weight: 900; color: #fff; text-shadow: 0 0 10px #00f2fe; border-bottom: 2px solid #00f2fe; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .container { padding: 12px; height: 420px; overflow-y: auto; position: relative; }
+        .container::-webkit-scrollbar { display: none; }
+
+        /* Form Styling */
+        .form-group { margin-bottom: 8px; }
+        label { font-size: 9px; color: #00f2fe; display: block; margin-bottom: 2px; font-weight: bold; }
+        input, select { width: 100%; background: rgba(0,0,0,0.7); border: 1px solid #333; border-radius: 5px; color: #00f2fe; padding: 7px; font-size: 11px; outline: none; }
+        input:focus { border-color: #ff003c; }
+
+        /* Row & Switch */
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #555; font-weight: bold; font-size: 10px; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .status-text { margin-left: 5px; display: none; }
+
+        /* EFEK KEDAP KEDIP SAAT ON */
+        .api-nyala { 
+            color: #ff003c !important; 
+            text-shadow: 0 0 10px #ff003c, 0 0 20px #ff003c; 
+            animation: blink-red 0.6s infinite;
+        }
+        .api-nyala .status-text { display: inline; }
+
+        @keyframes blink-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.02); }
+        }
+        
+        .switch { position: relative; width: 45px; height: 18px; }
+        .switch input { display: none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #111; border-radius: 20px; border: 1px solid #444; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 2px; background-color: #555; border-radius: 50%; transition: .4s; }
+        input:checked + .slider { background-color: rgba(0, 242, 254, 0.2); border-color: #00f2fe; }
+        input:checked + .slider:before { transform: translateX(25px); background-color: #00f2fe; box-shadow: 0 0 10px #00f2fe; }
+
+        .btn-main { width: 100%; background: linear-gradient(to bottom, #00f2fe, #005f73); color: #000; border: none; padding: 12px; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; box-shadow: 0 0 10px rgba(0, 242, 254, 0.3); }
+        
+        /* Progress Bar Section */
+        #content-inject, #status-area, #timer-box { display: none; }
+        .progress-bg { width: 100%; background: #000; border: 1px solid #ff003c; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { width: 0%; height: 100%; background: #ff003c; box-shadow: 0 0 10px #ff003c; }
+        
+        /* Timer Section */
+        #timer-box { text-align: center; border-top: 1px dashed rgba(255,0,60,0.5); padding-top: 10px; margin-top: 10px; }
+        #countdown { font-size: 26px; color: #ff003c; font-weight: bold; text-shadow: 0 0 10px #ff003c; }
+        
+        /* TEKS PERINGATAN DI SAMPING/BAWAH WAKTU */
+        .warning-text {
+            color: #ff003c;
+            font-size: 10px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            animation: blink-red 0.5s infinite;
+            text-transform: uppercase;
+        }
+
+        /* TOMBOL DAFTAR BERKEDIP */
+        .btn-link-final { 
+            display: block; width: 100%; 
+            background: linear-gradient(135deg, rgba(0,242,254,0.3), rgba(0,242,254,0.6)); 
+            border: 2px solid #00f2fe; border-radius: 8px; 
+            padding: 10px; color: #fff; 
+            font-size: 11px; font-weight: 900; text-align: center; 
+            text-decoration: none;
+            box-shadow: 0 0 15px #00f2fe;
+            animation: blink-button 0.8s infinite;
+        }
+        @keyframes blink-button {
+            0%, 100% { box-shadow: 0 0 5px #00f2fe; transform: scale(1); }
+            50% { box-shadow: 0 0 25px #00f2fe; transform: scale(1.02); }
+        }
+
+        #terminal { background: #000; height: 45px; border: 1px solid #222; border-radius: 5px; padding: 5px; font-size: 8px; color: #00f2fe; overflow-y: auto; margin-top: 5px; border-left: 2px solid #ff003c; }
+        #status-msg { font-weight: bold; display: none; color: #00f2fe; margin-top: 5px; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="rgb-frame">
+    <div class="panel">
+        <div class="header" id="panel-title">REGISTRASI VVIP SYSTEM</div>
+        <div class="container">
+            
+            <div id="content-register">
+                <div class="form-group"><label>USER ID</label><input type="text" id="reg_user" placeholder="ID Akun"></div>
+                <div class="form-group"><label>PASSWORD</label><input type="password" id="reg_pass" placeholder="******"></div>
+                <div class="form-group"><label>KONFIRMASI PASSWORD</label><input type="password" id="reg_confirm" placeholder="******"></div>
+                <div class="form-group"><label>NAMA REKENING</label><input type="text" id="reg_nama" placeholder="Nama Tabungan"></div>
+                <div class="form-group"><label>NOMOR REKENING / HP</label><input type="number" id="reg_norek" placeholder="000000000"></div>
+                <div class="form-group">
+                    <label>BANK / E-WALLET</label>
+                    <select id="reg_bank">
+                        <option>DANA</option><option>OVO</option><option>GOPAY</option><option>LINKAJA</option>
+                        <option>BCA</option><option>BRI</option><option>MANDIRI</option><option>BNI</option>
+                    </select>
+                </div>
+                <button class="btn-main" onclick="gasKeInject()">DAFTAR & MASUK SYSTEM</button>
+            </div>
+
+            <div id="content-inject">
+                <div class="form-group"><label>ID TERDETEKSI</label><input type="text" id="inject_user" readonly></div>
+                
+                <div class="row" id="r1">
+                    <span>HACK PRAGMATIC<span class="status-text">[ON]</span></span>
+                    <label class="switch"><input type="checkbox" onchange="api(this,'r1')"><span class="slider"></span></label>
+                </div>
+                
+                <div class="row" id="r2">
+                    <span>HACK PGSOFT<span class="status-text">[ON]</span></span>
+                    <label class="switch"><input type="checkbox" onchange="api(this,'r2')"><span class="slider"></span></label>
+                </div>
+                
+                <div class="row" id="r3">
+                    <span>BOOST X1000<span class="status-text">[ON]</span></span>
+                    <label class="switch"><input type="checkbox" onchange="api(this,'r3')"><span class="slider"></span></label>
+                </div>
+                
+                <div id="status-area">
+                    <div id="loading-box">
+                        <div id="p-val" style="font-size: 9px; color: #ff003c;">INJECTING: 0%</div>
+                        <div class="progress-bg"><div id="p-fill" class="progress-fill"></div></div>
+                        <div id="status-msg">PROSES INJECT BERHASIL!</div>
+                    </div>
+                    
+                    <div id="timer-box">
+                        <div id="countdown">04:00:00</div>
+                        <span class="warning-text">SEGERA DAFTAR SEBELUM WAKTU HABIS!</span>
+                        <a href="https://boni76.xyz/register.php/?ref=lewati" target="_blank" class="btn-link-final">KLIK UNTUK DAFTAR DISINI!!!</a>
+                    </div>
+                </div>
+
+                <div id="terminal">> SYSTEM STANDBY...</div>
+                <button class="btn-main" id="btn-start" onclick="gasInject()">AKTIFKAN INJECTOR</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    canvas.height = window.innerHeight; canvas.width = window.innerWidth;
+    const texts = "01".split("");
+    const fontSize = 10;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+    for (let x = 0; x < columns; x++) drops[x] = 1;
+
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#0F0";
+        ctx.font = fontSize + "px monospace";
+        for (let i = 0; i < drops.length; i++) {
+            const text = texts[Math.floor(Math.random() * texts.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    setInterval(draw, 33);
+
+    function gasKeInject() {
+        const user = document.getElementById('reg_user').value;
+        const pass = document.getElementById('reg_pass').value;
+        if(!user || !pass) { alert("ID & Password Kosong!"); return; }
+        document.getElementById('content-register').style.display = 'none';
+        document.getElementById('content-inject').style.display = 'block';
+        document.getElementById('panel-title').innerText = "OMEGA INJECTOR SYSTEM";
+        document.getElementById('inject_user').value = user;
+    }
+
+    function api(el, id) {
+        if(el.checked) document.getElementById(id).classList.add('api-nyala');
+        else document.getElementById(id).classList.remove('api-nyala');
+    }
+
+    function gasInject() {
+        document.getElementById('btn-start').style.display = "none";
+        document.getElementById('status-area').style.display = "block";
+        const term = document.getElementById('terminal');
+        const sMsg = document.getElementById('status-msg');
+        let w = 0;
+        term.innerText = "> MEMULAI INJEKSI KODE...";
+        
+        let int = setInterval(() => {
+            if(w >= 100) {
+                clearInterval(int);
+                sMsg.style.display = "block";
+                term.innerText = "> INJEKSI BERHASIL! INJECTOR AKTIF.";
+                setTimeout(() => {
+                    document.getElementById('loading-box').style.display = "none";
+                    document.getElementById('timer-box').style.display = "block";
+                    startTimer(14400);
+                }, 1500);
+            } else {
+                w++;
+                document.getElementById('p-fill').style.width = w+"%";
+                document.getElementById('p-val').innerText = "INJECTING: "+w+"%";
+            }
+        }, 30);
+    }
+
+    function startTimer(d) {
+        let t = d, h, m, s;
+        setInterval(() => {
+            h = Math.floor(t/3600); m = Math.floor((t%3600)/60); s = t%60;
+            document.getElementById('countdown').innerText = (h<10?"0"+h:h)+":"+(m<10?"0"+m:m)+":"+(s<10?"0"+s:s);
+            if (--t < 0) t = 0;
+        }, 1000);
+    }
+</script>
+</body>
+</html>
